@@ -17,8 +17,34 @@ fn add_n_inplace(v: &mut Vec<i32>, n: i32) {
 }
 
 fn dedup(v: &mut Vec<i32>) {
-    unimplemented!()
+    let mut set:HashSet<_> = HashSet::new();
+    let mut mark = Vec::new();
+    let mut i = 0;
+    while i < v.len() {
+        if set.insert(v[i]) {
+            mark.push(v[i]);
+        }
+        i += 1;
+    }
+    v.clear();
+    v.extend(mark);
 }
+
+// fn dedup(v: &mut Vec<i32>) {
+//     let mut vec:Vec<i32> = Vec::new();
+//     // for _ in collection中,for循环会直接抢走集合的所有权
+//     // 需要使用 for _ in &collection
+//     // 这里传进来的是个指针,直接for in v rust会自动解引用;
+//     // 但是如果需要声明是不可变引用的话，需要手动解引用,再创建&
+//     for ele in & *v {
+//         if !vec.contains(ele) {
+//             vec.push(*ele);
+//         }
+//     }
+//     v.clear();
+//     v.append(&mut vec);
+// }
+
 
 #[cfg(test)]
 mod test {
