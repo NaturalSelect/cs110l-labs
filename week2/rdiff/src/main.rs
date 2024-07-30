@@ -51,12 +51,18 @@ fn lcs(seq1: &Vec<String>, seq2: &Vec<String>) -> Grid {
 
 #[allow(unused)] // TODO: delete this line when you implement this function
 fn print_diff(lcs_table: &Grid, lines1: &Vec<String>, lines2: &Vec<String>, i: usize, j: usize) {
+    // 递归角度,越靠后的行越晚打印,所以是后序
+    
+    // 如果两个文本当前行一样,则这行入栈,各自行数都-1，处理前一行
     if i > 0 && j > 0 && lines1[i - 1] == lines2[j - 1] {
         print_diff(lcs_table, lines1, lines2, i-1, j-1);
         println!("  {}" , lines1[i-1]);
+        // 文本2还有内容, 如果文本1没有内容 , 或者dp[i][j-1]的最长子序列比dp[i-1][1]长（说明i对应的行更重要，文本2的j行删了也没关系,
+        // 对应文本2比文本1多的内容
     } else  if j > 0 && (i == 0 || lcs_table.get(i, j - 1).unwrap() >= lcs_table.get(i-1, j).unwrap()) {
         print_diff(lcs_table, lines1, lines2, i, j-1);
         println!(">  {}" , lines2[j-1]);
+        // 上个分支反过来，文本1比文本2多的内容
     }  else if i > 0 && (j == 0 || lcs_table.get(i, j - 1).unwrap() < lcs_table.get(i-1, j).unwrap()) {
         print_diff(lcs_table, lines1, lines2, i-1, j);
         println!("<  {}" , lines1[i-1]);
