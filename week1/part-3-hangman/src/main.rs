@@ -14,9 +14,11 @@
 // more in depth in the coming lectures.
 extern crate rand;
 use rand::Rng;
+use std::char;
 use std::fs;
 use std::io;
 use std::io::Write;
+use std::mem::swap;
 
 const NUM_INCORRECT_GUESSES: u32 = 5;
 const WORDS_PATH: &str = "words.txt";
@@ -32,9 +34,44 @@ fn main() {
     // Note: given what you know about Rust so far, it's easier to pull characters out of a
     // vector than it is to pull them out of a string. You can get the ith character of
     // secret_word by doing secret_word_chars[i].
-    let secret_word_chars: Vec<char> = secret_word.chars().collect();
-    // Uncomment for debugging:
-    // println!("random word: {}", secret_word);
-
-    // Your code here! :)
+    let mut secret_word_chars: Vec<char> = secret_word.chars().collect();
+    let mut output: Vec<char> = vec!['-'; secret_word_chars.len()];
+    print!("Please guess a letter: ");
+    // Make sure the prompt from the previous line gets displayed:
+    io::stdout().flush().expect("Error flushing stdout.");
+    let mut state = 0;
+    let mut chance = NUM_INCORRECT_GUESSES;
+    let mut rest = secret_word_chars.len();
+    loop  {
+        print!("Please guess a letter: ");
+        let mut guess = String::new();
+        io::stdin().read_line(&mut guess).expect("Error reading line.");
+        if guess.len() > 3 {
+            state = 3;
+            break;
+        }
+        let guess_char = guess.chars().next().unwrap();
+        match secret_word_chars.iter().position(|x| *x == guess_char) {
+            Some(i) => {
+            output[i] =  secret_word_chars[i];
+            secret_word_chars[i] = '-';
+            rest -=1;},
+            None => {chance -= 1;}
+        }
+        if chance == 0 { 
+            state = 2;
+            break;
+        } 
+        if rest == 0 {
+            state = 1;
+            break;
+        }
+        output.iter().for_each(|c| {print!("{}", c)});
+        println!("");
+    }
+    if state == 1 {
+        println!("win!");
+    } else {
+        println!("lose!{}, word:{}", state, secret_word);
+    };
 }
