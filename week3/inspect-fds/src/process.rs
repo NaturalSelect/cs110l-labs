@@ -22,8 +22,17 @@ impl Process {
     /// descriptor table.)
     #[allow(unused)] // TODO: delete this line for Milestone 3
     pub fn list_fds(&self) -> Option<Vec<usize>> {
-        // TODO: implement for Milestone 3
-        unimplemented!();
+        let path = format!("/proc/{}/fd", self.pid);
+        let dir = fs::read_dir(path).ok()?;
+        let mut res = vec![]; 
+        for entry in dir.filter_map(|e| e.ok())  {
+            let str = entry.file_name().into_string().ok()?;
+            res.push(str.parse::<usize>().ok()?);
+        }
+        match res.is_empty() {
+            true => None,
+            false => Some(res),
+        }       
     }
 
     /// This function returns a list of (fdnumber, OpenFile) tuples, if file descriptor
@@ -36,6 +45,38 @@ impl Process {
             open_files.push((fd, OpenFile::from_fd(self.pid, fd)?));
         }
         Some(open_files)
+    }
+
+    pub fn print(&self) {
+        println!("========== \"{}\" pid:{} ppid:{} =========", self.command, self.pid, self.ppid);
+        match self.list_open_files() {
+            None => println!(
+                "Warning: could not inspect file descriptors for this process! \
+                    It might have exited just as we were about to look at its fd table, \
+                    or it might have exited a while ago and is waiting for the parent \
+                    to reap it."
+            ),
+            Some(open_files) => {
+                for (fd, file) in open_files {
+                    println!(
+                        "{:<4} {:<15} cursor: {:<4} {}",
+                        fd,
+                        format!("({})", file.access_mode),
+                        file.cursor,
+                        file.colorized_name(),
+                    );
+                }
+            }
+        }
+        
+        // match self.list_fds() {
+        //     None => {}
+        //     Some(res) => {
+        //         print!("fds:");
+        //         res.iter().for_each(|x| {print!("{} ", x)});
+        //         println!("");
+        //     }
+        // }
     }
 }
 
