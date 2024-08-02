@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, clone};
 use std::option::Option;
 
 pub struct  LinkedList<T> {
@@ -7,7 +7,7 @@ pub struct  LinkedList<T> {
 }
 
 struct Node<T> {
-    value: T,
+    pub value: T,
     next: Option<Box<Node<T>>>,
 }
 
@@ -71,5 +71,46 @@ impl<T> Drop for LinkedList<T> {
     }
 }
 
+
+impl<T:PartialEq> PartialEq for LinkedList<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.head.eq(&other.head) && self.size == other.size
+    }
+}
+
+impl<T:PartialEq> PartialEq for Node<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value.eq(&other.value) && self.next.eq(&other.next)
+    }
+}
+
+// // 非递归实现
+// impl<T:Clone> Clone for LinkedList<T> {
+//     fn clone(&self) -> Self {
+//         let mut new = LinkedList{head: None, size: self.size.clone()};
+//         let mut current = &self.head;
+//         let mut temp = vec![];
+//         while let Some(ref1) = current {
+//             temp.push(ref1);
+//             current = &ref1.next;
+//         }
+//         let curr = temp.pop();
+//         while let Some(content) = curr  {
+//             new.push_front(content.value.clone())
+//         }  
+//         new
+//     }
+// }
+
+impl<T:Clone> Clone for Node<T> {
+    fn clone(&self) -> Self {
+        Node {value:self.value.clone(), next:self.next.clone()}
+    }
+}
+impl<T:Clone> Clone for LinkedList<T> {
+    fn clone(&self) -> Self {
+        LinkedList{head: self.head.clone(), size: self.size}
+    }
+}
 
 
