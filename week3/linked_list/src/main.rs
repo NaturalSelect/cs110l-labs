@@ -14,9 +14,27 @@ fn main() {
     println!("{}", list);
     println!("size: {}", list.get_size());
     println!("{}", list.to_string()); // ToString impl for anything impl Display
+    println!("==========test iterator=========");
 
-    // If you implement iterator trait:
-    //for val in &list {
-    //    println!("{}", val);
-    //}
+    let mut ls = LinkedList::new();
+    ls.push_front(10);
+    ls.push_front(9);
+    ls.push_front(8);
+    ls.push_front(7);
+
+    println!("==========test ref iterator=========");
+
+    for ele in &ls {
+        println!("{}", ele)
+    }
+
+    println!("==========test clone=============");
+    let ls_copy: LinkedList<i32> = ls.clone();
+    for ele in &ls_copy {
+        println!("{}", ele)
+    }
+    println!("==========test into iterator=========");
+    for ele in ls {
+        println!("{}", ele)
+    }
 }
