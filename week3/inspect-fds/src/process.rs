@@ -10,7 +10,6 @@ pub struct Process {
 }
 
 impl Process {
-    #[allow(unused)] // TODO: delete this line for Milestone 1
     pub fn new(pid: usize, ppid: usize, command: String) -> Process {
         Process { pid, ppid, command }
     }
@@ -20,10 +19,28 @@ impl Process {
     /// information will commonly be unavailable if the process has exited. (Zombie processes
     /// still have a pid, but their resources have already been freed, including the file
     /// descriptor table.)
-    #[allow(unused)] // TODO: delete this line for Milestone 3
     pub fn list_fds(&self) -> Option<Vec<usize>> {
-        // TODO: implement for Milestone 3
-        unimplemented!();
+        let p = format!("/proc/{}/fd", self.pid);
+        let dentries = fs::read_dir(p);
+        if let Err(_) = dentries {
+            return None;
+        }
+        let dentries = dentries.unwrap();
+        let mut fds: Vec<usize> = vec![];
+        for entry in dentries {
+            let entry = entry;
+            if let Err(_) = entry {
+                return None;
+            }
+            let entry = entry.unwrap();
+            let name = entry.file_name().into_string();
+            if let Err(_) = name {
+                return None;
+            }
+            let name = name.unwrap();
+            fds.push(name.parse::<usize>().unwrap());
+        }
+        return Some(fds);
     }
 
     /// This function returns a list of (fdnumber, OpenFile) tuples, if file descriptor
@@ -36,6 +53,29 @@ impl Process {
             open_files.push((fd, OpenFile::from_fd(self.pid, fd)?));
         }
         Some(open_files)
+    }
+
+    #[allow(unused)]
+    pub fn print(&self) {
+        // NOTE: ========== "bash" (pid 18042, ppid 17996) ==========
+        println!(
+            "========== \"{}\" (pid {}, ppid {}) ==========",
+            self.command, self.pid, self.ppid
+        );
+        let fds = self.list_open_files();
+        if let None = fds {
+            return;
+        }
+        let fds = fds.unwrap();
+        for (fd, file) in fds.iter() {
+            println!(
+                "{:<4} {:<15} cursor: {:<4} {}",
+                fd,
+                format!("({})", file.access_mode),
+                file.cursor,
+                file.colorized_name(),
+            );
+        }
     }
 }
 
