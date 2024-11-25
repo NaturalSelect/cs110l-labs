@@ -123,7 +123,6 @@ impl Inferior {
         // NOTE: if we hint breakpoint, we should restore the original byte
         // and set it's next instruction to INT
         let bp = self.hint_breakpoint(regs.rip as usize);
-        let copy_bp = bp.clone();
         let mut restore_byte: Option<u8> = None;
         if let Some(bp) = bp {
             // NOTE: restore the original byte
@@ -147,62 +146,20 @@ impl Inferior {
                 return Err(err);
             }
 
-            // NOTE: set the next instruction to INT
-            let regs = ptrace::getregs(self.pid());
-            if let Err(err) = regs {
+            // NOTE: restore 0xcc to the address
+            let r = self.write_byte(bp.addr, 0xcc);
+            if let Err(err) = r {
+                println!("Skip breakpoint error: {:?}", err);
                 return Err(err);
             }
-            let regs = regs.unwrap();
-            let ori_byte = self.write_byte(regs.rip as usize, 0xcc);
-            if let Err(err) = ori_byte {
-                return Err(err);
-            }
-            restore_byte = Some(ori_byte.unwrap());
         }
 
         let r = ptrace::cont(self.pid(), None);
         if let Err(err) = r {
             return Err(err);
         }
-
-        // NOTE: if we hint bp
-        if let Some(restore_byte) = restore_byte {
-            let r = self.wait(None);
-            if let Err(err) = r {
-                return Err(err);
-            }
-            // NOTE: reset breakpoint
-            let bp = copy_bp.unwrap();
-            let ori_byte = self.write_byte(bp.addr, 0xcc);
-            if let Err(err) = ori_byte {
-                return Err(err);
-            }
-            // NOTE: restore the original byte
-            let ori_byte = self.write_byte(bp.addr, restore_byte);
-            if let Err(err) = ori_byte {
-                return Err(err);
-            }
-            // NOTE: continue
-            let r = ptrace::cont(self.pid(), None);
-            if let Err(err) = r {
-                return Err(err);
-            }
-        }
         return self.wait(None);
     }
-
-    // pub fn on_stop(&mut self) {
-    //     let regs = ptrace::getregs(self.pid()).unwrap();
-    //     let bp = self.hint_breakpoint(regs.rip as usize);
-    //     if let Some(bp) = bp {
-    //         let ori_byte = self.write_byte(bp.addr, 0xcc);
-    //         if let Err(err) = ori_byte {
-    //             println!("Error: {:?}", err);
-    //             return;
-    //         }
-    //         println!("Breakpoint at {:x}", bp.addr);
-    //     }
-    // }
 
     pub fn kill(&mut self) -> io::Result<()> {
         return self.child.kill();
